@@ -32,8 +32,12 @@ with st.sidebar.expander("Model Information"):
 # File uploader for multiple images
 uploaded_files = st.file_uploader("Choose images...", type=["jpg", "png", "jpeg"], accept_multiple_files=True)
 
-# Camera input
-camera_input = st.camera_input("Take a picture")
+# Initialize camera_input to avoid 'NameError'
+camera_input = None
+
+# Camera input button
+if st.button("Use Camera"):
+    camera_input = st.camera_input("Take a picture")
 
 if uploaded_files or camera_input:
     images = []
@@ -44,73 +48,63 @@ if uploaded_files or camera_input:
     if camera_input:
         images.append(camera_input)
 
-    for uploaded_file in images:
-        # Display the uploaded image
-        image = Image.open(uploaded_file)
-        st.image(image, caption="Uploaded Image", use_container_width=True)
+    st.write("### Uploaded Images and Predictions")
 
-        # Convert image to NumPy array
-        img_array = np.array(image)
+    if len(images) > 1:
+        col_1, col_2 = st.columns(2)  # Create two columns for horizontal layout
+        columns = [col_1, col_2]
+    else:
+        columns = [st]
 
-        # Convert grayscale images to RGB (if needed)
-        if img_array.ndim == 2:
-            img_array = cv2.cvtColor(img_array, cv2.COLOR_GRAY2RGB)
+    for i, uploaded_file in enumerate(images):
+        col = columns[i % 2] if len(images) > 1 else columns[0]
 
-        # Ensure 3 color channels
-        elif img_array.shape[-1] == 1:
-            img_array = np.repeat(img_array, 3, axis=-1)
+        with col:
+            # Display the uploaded image
+            image = Image.open(uploaded_file)
+            st.image(image, caption="Uploaded Image", use_container_width=True)
 
-        # Resize image
-        img_resized = cv2.resize(img_array, (224, 224))
+            # Convert image to NumPy array
+            img_array = np.array(image)
 
-        # Normalize and expand dimensions
-        img_resized = img_resized / 255.0  # Normalize
-        img_reshaped = np.expand_dims(img_resized, axis=0)  # Add batch dimension
+            # Convert grayscale images to RGB (if needed)
+            if img_array.ndim == 2:
+                img_array = cv2.cvtColor(img_array, cv2.COLOR_GRAY2RGB)
+            elif img_array.shape[-1] == 1:
+                img_array = np.repeat(img_array, 3, axis=-1)
 
-        # Make prediction
-        prediction = model.predict(img_reshaped)[0][0]  # Extract single probability value
+            # Resize image
+            img_resized = cv2.resize(img_array, (224, 224))
 
-        # Classification based on probability
-        if prediction < 0.5:
-            predicted_class = "Organic"
-            confidence = (1 - prediction) * 100  # Confidence in Organic class
-        else:
-            predicted_class = "Recyclable"
-            confidence = prediction * 100  # Confidence in Recyclable class
+            # Normalize and expand dimensions
+            img_resized = img_resized / 255.0  # Normalize
+            img_reshaped = np.expand_dims(img_resized, axis=0)  # Add batch dimension
 
-        # Display result
-        st.success(f"Prediction: **{predicted_class}** with {confidence:.2f}% confidence")
+            # Make prediction
+            prediction = model.predict(img_reshaped)[0][0]  # Extract single probability value
 
-        # Show detailed classification information
-        def show_waste_info(predicted_class):
-            if predicted_class == "Organic":
-                st.info("""
-                **Organic Waste Handling:**
-                - Compostable ✅
-                - Biodegradable time: 2-6 weeks
-                - Recommended disposal: Compost bin
-                """)
+            # Classification based on probability
+            if prediction < 0.5:
+                predicted_class = "Organic"
+                confidence = (1 - prediction) * 100  # Confidence in Organic class
             else:
-                st.info("""
-                **Recyclable Waste Handling:**
-                - Recyclable ✅
-                - Processing method: Industrial recycling
-                - Recommended bin: Recycling bin
-                """)
-                
-        show_waste_info(predicted_class)
+                predicted_class = "Recyclable"
+                confidence = prediction * 100  # Confidence in Recyclable class
 
-        # Add to session state history
-        if 'history' not in st.session_state:
-            st.session_state.history = []
+            # Display prediction
+            st.success(f"Prediction: **{predicted_class}** with {confidence:.2f}% confidence")
 
-        st.session_state.history.append({
-            'image': uploaded_file.name if uploaded_file else 'Camera Input',
-            'prediction': predicted_class,
-            'confidence': confidence,
-            'timestamp': datetime.now()
-        })
-        
+            # Add to session state history
+            if 'history' not in st.session_state:
+                st.session_state.history = []
+
+            st.session_state.history.append({
+                'image': uploaded_file.name if uploaded_file else 'Camera Input',
+                'prediction': predicted_class,
+                'confidence': confidence,
+                'timestamp': datetime.now()
+            })
+
 # Display history
 if st.checkbox("Show History"):
     if 'history' in st.session_state:
