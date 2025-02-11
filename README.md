@@ -23,3 +23,32 @@ This project aims to design and train a deep learning model that can accurately 
 - Classes: Organic, Recyclable
 - Class balance: 56 : 44
 
+## How to Use
+ - To get started, clone the repository using the following command:
+   ```bash
+   git clone https://github.com/Jay0073/Waste-Classifier.git
+   cd Waste-Classifier
+ - Ensure you have python installed, then install the required libraries:
+   ```bash
+   pip install -r requirements.txt
+ - after installing the libraries, you can run the streamlit app to check the model performance
+   ```bash
+   python -m streamlit run app.py
+ - Alternatively, if you want to see the model training and stuff then checkout **CNN.ipynb** file
+   
+## See the Deployed Model
+You can see the deployed model in action by visiting the following link: https://waste-classifier-busdsh36gmgochhha3ovz6.streamlit.app/
+
+## Contributions
+Contributions are welcome! If you would like to contribute, please follow these steps:
+ - Fork this repository
+ - Create a new branch
+   ```bash
+   git checkout -b branch-name
+ - Make your changes and commit them
+   ```bash
+   git commit -m 'commit-message'
+ - Push to the branch
+   ```bash
+   git push origin branch-name
+ - Open a pull request
